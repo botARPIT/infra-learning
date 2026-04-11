@@ -13,13 +13,13 @@ class Job(Base):
     result = Column(Text, nullable=True)
     error = Column(Text, nullable=True)
 
-    retry_count = Column(Integer, default=0)
-    lease_version = Column(Integer, default=0)
+    retry_count = Column(Integer, default=0, nullable=False)
+    lease_version = Column(Integer, default=0, nullable=False)
 
     owned_by = Column(String, nullable=True)
 
-    created_at = Column(DateTime, default=datetime.utcnow)
-    updated_at = Column(DateTime, default=datetime.utcnow)
+    created_at = Column(DateTime, default=datetime.utcnow, nullable=False)
+    updated_at = Column(DateTime, default=datetime.utcnow, nullable=False)
 
     claimed_at = Column(DateTime, nullable=True)
     
