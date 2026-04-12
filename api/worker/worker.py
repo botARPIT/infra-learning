@@ -34,13 +34,15 @@ def claim_job(job_id: str, worker_id: str):
     finally:
         db.close()
         
-def complete_job(job_id: str, lease_version: int):
+def complete_job(job_id: str, lease_version: int, worker_id: str):
     db = SessionLocal()
     
     try:
         job = db.query(Job).filter(
             Job.id == job_id,
-            Job.lease_version == lease_version
+            Job.lease_version == lease_version,
+            Job.status == "processing",
+            Job.owned_by == worker_id
         ).first()
         
         if not job:
