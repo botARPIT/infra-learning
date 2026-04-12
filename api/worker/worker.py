@@ -1,6 +1,6 @@
 from sqlalchemy.orm import Session
 from sqlalchemy import select
-from datetime import datetime
+from datetime import datetime, timezone
 
 from api.app.db import SessionLocal
 from api.app.models import Job
@@ -51,19 +51,23 @@ def complete_job(job_id: str, lease_version: int, worker_id: str):
         
         job.status = "done"
         job.result = "finished"
+        job.updated_at = datetime.now(timezone.utc)
+        job.error = None
         db.commit()
         return True
     
     finally:
         db.close()
         
-def fail_job(job_id: str, lease_version: int, error: str):
+def fail_job(job_id: str, lease_version: int, worker_id: str, error: str):
     db = SessionLocal()
     
     try:
         job = db.query(Job).filter(
             Job.id == job_id,
-            Job.lease_version == lease_version
+            Job.lease_version == lease_version,
+            Job.owned_by == worker_id,
+            Job.status == "processing"
         ).first()
         
         if not job:
@@ -71,6 +75,8 @@ def fail_job(job_id: str, lease_version: int, error: str):
         
         job.status = "failed"
         job.error = error
+        job.result = None
+        job.updated_at = datetime.now(timezone.utc)
         
         db.commit()
         return True
