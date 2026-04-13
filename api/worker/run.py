@@ -23,8 +23,6 @@ while True:
         print(f"[{worker_id}] claimed {job_id}")
 
         time.sleep(5)
-
-        complete_job(job_id, lease_version, worker_id)
         
         success = complete_job(job_id, lease_version, worker_id)
 
@@ -33,7 +31,6 @@ while True:
         else:
             print(f"[{worker_id}] stale completion discarded {job_id}")
 
-        print(f"[{worker_id}] completed {job_id}")
 
     except Exception as e:
         fail_job(job_id, lease_version, worker_id, str(e))
