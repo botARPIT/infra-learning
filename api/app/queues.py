@@ -10,3 +10,6 @@ def enqueue_job(job_id: str):
 def dequeue_job():
     item = r.blpop("jobs")
     return item[1]
+
+def get_queue_depth():
+    return r.llen("jobs")
