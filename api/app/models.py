@@ -19,7 +19,7 @@ class Job(Base):
     owned_by = Column(String, nullable=True)
 
     created_at = Column(DateTime, default=datetime.now(timezone.utc), nullable=False)
-    updated_at = Column(DateTime, default=datetime.now(timezone.utc), nullable=False)
+    updated_at = Column(DateTime, default=datetime.now(timezone.utc), onupdate=datetime.now(timezone.utc), nullable=False)
 
     claimed_at = Column(DateTime, nullable=True)
     
