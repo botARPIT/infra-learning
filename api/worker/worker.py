@@ -53,6 +53,8 @@ def complete_job(job_id: str, lease_version: int, worker_id: str):
         job.result = "finished"
         job.updated_at = datetime.now(timezone.utc)
         job.error = None
+        job.claimed_at = None
+        job.owned_by = None
         db.commit()
         return True
     
