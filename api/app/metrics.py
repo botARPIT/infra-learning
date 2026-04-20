@@ -2,12 +2,15 @@ from sqlalchemy import func
 from api.app.db import SessionLocal
 from api.app.models import Job
 from api.app.queues import get_queue_depth
+from datetime import timedelta, datetime, timezone
+
 
 
 def get_metrics():
     db = SessionLocal()
 
     try:
+        window = datetime.now(timezone.utc) - timedelta(hours=1)
         queue_depth = get_queue_depth()
 
         state_counts = (
@@ -32,7 +35,10 @@ def get_metrics():
             db.query(
                 func.extract('epoch', Job.updated_at - Job.created_at)
             )
-            .filter(Job.status.in_(["done", "failed"]))
+            .filter(
+                Job.status.in_(["done", "failed"]),
+                Job.updated_at >= window
+                    )
             .all()
         )
 
