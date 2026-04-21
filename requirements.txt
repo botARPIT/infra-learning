@@ -5,3 +5,4 @@ psycopg2-binary==2.9.9
 redis==5.0.3
 pydantic==2.6.4
 starlette==0.36.3
+prometheus_client
