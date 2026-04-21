@@ -1,10 +1,25 @@
 from sqlalchemy import func
+from datetime import timedelta, datetime, timezone
+from prometheus_client import Gauge, generate_latest
+
 from api.app.db import SessionLocal
 from api.app.models import Job
 from api.app.queues import get_queue_depth
-from datetime import timedelta, datetime, timezone
 
+queue_depth_gauge = Gauge(
+    "queue_depth",
+    "Current Redis queue depth"
+)
 
+terminal_latency_avg_gauge = Gauge(
+    "terminal_latency_avg_seconds",
+    "Average terminal latency"
+)
+
+terminal_latency_p95_gauge = Gauge(
+    "terminal_latency_p95_seconds",
+    "P95 terminal latency"
+)
 
 def get_metrics():
     db = SessionLocal()
@@ -63,3 +78,16 @@ def get_metrics():
 
     finally:
         db.close()
+        
+def get_prometheus_metrics():
+    metrics = get_metrics()
+
+    queue_depth_gauge.set(metrics["queue_depth"])
+    terminal_latency_avg_gauge.set(
+        metrics["avg_terminal_latency_seconds"]
+    )
+    terminal_latency_p95_gauge.set(
+        metrics["p95_terminal_latency_seconds"]
+    )
+
+    return generate_latest()
