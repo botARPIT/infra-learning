@@ -6,7 +6,9 @@ from .db import SessionLocal, engine, get_db
 from .models import Base, Job
 from .schemas import JobRequest
 from .queues import enqueue_job
-from .metrics import get_metrics
+from .metrics import get_metrics, get_prometheus_metrics
+from fastapi.responses import Response
+
 
 Base.metadata.create_all(bind=engine)
 
@@ -48,9 +50,16 @@ def create_job(payload: JobRequest, db: Session = Depends(get_db)):
 def health():
     return {"status": "ok"}
 
-@app.get("/metrics")
+@app.get("/debug-metrics")
 def metrics():
     return get_metrics()
+
+@app.get("/metrics")
+def metrics():
+    return Response(
+        get_prometheus_metrics(),
+        media_type="text/plain"
+    )
 
 @app.get("jobs/{job_id}")
 def status(job_id: str):
