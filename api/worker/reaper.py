@@ -1,5 +1,5 @@
 import time
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 
 from api.app.db import SessionLocal
 from api.app.models import Job
@@ -14,7 +14,7 @@ def reap_stale_jobs():
     db = SessionLocal()
 
     try:
-        threshold = datetime.utcnow() - timedelta(seconds=STALE_AFTER_SECONDS)
+        threshold = datetime.now(timezone.utc) - timedelta(seconds=STALE_AFTER_SECONDS)
 
         stale_jobs = (
             db.query(Job)
@@ -33,7 +33,7 @@ def reap_stale_jobs():
             job.lease_version += 1
             job.owned_by = None
             job.claimed_at = None
-            job.updated_at = datetime.utcnow()
+            job.updated_at = datetime.now(timezone.utc)
 
             recovered_ids.append(job.id)
 
