@@ -32,21 +32,17 @@ execution_avg_gauge = Gauge(
     "Average execution latency"
 )
 
-# Counters
-jobs_completed_total = Counter(
+jobs_completed_total = Gauge(
     "jobs_completed_total",
     "Total completed jobs"
 )
-jobs_claimed_total = Counter(
-    "jobs_claimed_total",
-    "Total claimed jobs"
-)
-jobs_failed_total = Counter(
+
+jobs_failed_total = Gauge(
     "jobs_failed_total",
     "Total failed jobs"
 )
 
-jobs_retried_total = Counter(
+jobs_retried_total = Gauge(
     "jobs_retried_total",
     "Total retried jobs"
 )
@@ -71,6 +67,17 @@ def get_metrics():
             .all()
         )
 
+        completed = db.query(func.count()).filter(
+            Job.status == "done"
+            ).scalar()
+        
+        failed = db.query(func.count()).filter(
+            Job.status == "failed"
+            ).scalar()
+        
+        retried = db.query(func.count()).filter(
+            Job.retry_count > 0
+            ).scalar()
         
         retry_distribution = {
             str(retry): count for retry, count in retry_counts
@@ -146,6 +153,9 @@ def get_metrics():
             "retry_distribution": retry_distribution,
             "avg_terminal_latency_seconds": avg_latency,
             "p95_terminal_latency_seconds": p95_latency,
+            "jobs_completed_total": completed,
+            "jobs_failed_total": failed,
+            "jobs_retried_total": retried,
             "queue_wait_avg_seconds": queue_wait_avg,
             "execution_avg_seconds": execution_avg,
         }
@@ -165,6 +175,12 @@ def get_prometheus_metrics():
     terminal_latency_p95_gauge.set(
         metrics["p95_terminal_latency_seconds"]
     )
+    
+    jobs_completed_total.set(metrics["jobs_completed_total"])
+    
+    jobs_failed_total.set(metrics["jobs_failed_total"])
+    
+    jobs_retried_total.set(metrics["jobs_retried_total"])
     
     queue_wait_avg_gauge.set(metrics["queue_wait_avg_seconds"])
     
