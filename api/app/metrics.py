@@ -89,6 +89,7 @@ def get_metrics():
             )
             .filter(
                 Job.status.in_(["done", "failed"]),
+                Job.claimed_at.isnot(None),
                 Job.updated_at >= window
                     )
             .all()
