@@ -1,11 +1,10 @@
-from sqlalchemy.orm import Session
 from sqlalchemy import select
 from datetime import datetime, timezone
 
 from api.app.db import SessionLocal
 from api.app.models import Job
 from api.app.queues import enqueue_job
-from api.app.metrics import jobs_claimed_total, jobs_completed_total, jobs_failed_total, jobs_retried_total
+
 
 MAX_RETRIES = 3
 
