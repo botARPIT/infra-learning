@@ -180,12 +180,6 @@ def get_prometheus_metrics():
         metrics["p95_terminal_latency_seconds"]
     )
     
-    jobs_completed_total.set(metrics["jobs_completed_total"])
-    
-    jobs_failed_total.set(metrics["jobs_failed_total"])
-    
-    jobs_retried_total.set(metrics["jobs_retried_total"])
-    
     queue_wait_avg_gauge.set(metrics["queue_wait_avg_seconds"])
     
     execution_avg_gauge.set(metrics["execution_avg_seconds"])
