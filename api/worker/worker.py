@@ -27,6 +27,7 @@ def claim_job(job_id: str, worker_id: str):
         job.status = "processing"
         job.owned_by = worker_id
         job.claimed_at = datetime.now(timezone.utc)
+        job.execution_started_at = datetime.now(timezone.utc)
         job.lease_version += 1
 
         db.commit()
@@ -89,6 +90,7 @@ def fail_job(job_id: str, lease_version: int, worker_id: str, error: str):
             job.lease_version += 1
             job.owned_by = None
             job.claimed_at = None
+            job.execution_started_at = None
 
         else:
             job.status = "failed"

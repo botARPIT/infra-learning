@@ -88,10 +88,7 @@ def get_metrics():
                 func.extract('epoch', Job.updated_at - Job.created_at)
             )
             .filter(
-                Job.status.in_(["done", "failed"]),
-                Job.claimed_at.isnot(None),
-                Job.updated_at >= window
-                    )
+                Job.status.in_(["done", "failed"]))
             .all()
         )
 
@@ -108,10 +105,10 @@ def get_metrics():
             
         queue_wait_latencies = (
             db.query(
-                func.extract('epoch', Job.claimed_at - Job.created_at)
+                func.extract('epoch', Job.execution_started_at - Job.created_at)
             )
             .filter(
-                Job.claimed_at.isnot(None)
+                Job.execution_started_at.isnot(None)
             )
             .all()
         )
@@ -127,11 +124,11 @@ def get_metrics():
         
         execution_latencies = (
             db.query(
-                func.extract('epoch', Job.updated_at - Job.claimed_at)
+                func.extract('epoch', Job.execution_started_at - Job.claimed_at)
             )
             .filter(
                 Job.status.in_(["done", "failed"]),
-                Job.claimed_at.isnot(None)
+                Job.execution_started_at.isnot(None)
             )
             .all()
         )     
