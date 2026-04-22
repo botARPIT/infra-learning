@@ -113,13 +113,13 @@ def get_metrics():
                 func.extract('epoch', Job.claimed_at - Job.created_at)
             )
             .filter(
-                Job.execution_started_at.isnot(None)
+                Job.claimed_at.isnot(None)
             )
             .all()
         )
         
         queue_wait_values = [
-            row[0] for row in queue_wait_latencies if row[0] is not None
+            float(row[0]) for row in queue_wait_latencies if row[0] is not None
         ]
         
         queue_wait_avg = round(
@@ -140,7 +140,7 @@ def get_metrics():
         )     
         
         execution_values = [
-            row[0] for row in execution_latencies if row[0] is not None
+            float(row[0]) for row in execution_latencies if row[0] is not None
         ]
         
         execution_avg = round(
