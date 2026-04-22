@@ -87,12 +87,18 @@ def get_metrics():
             db.query(
                 func.extract('epoch', Job.updated_at - Job.created_at)
             )
-            .filter(
-                Job.status.in_(["done", "failed"]))
+            .filter(Job.status.in_(["done", "failed"]))
             .all()
         )
 
-        values = [row[0] for row in terminal_latencies if row[0] is not None]
+# extract safely regardless of how SQLAlchemy wraps the result
+        values = []
+        for row in terminal_latencies:
+            val = row[0] if row[0] is not None else None
+            if val is not None:
+                values.append(float(val))  # force float — Decimal silently breaks sum()/sort()
+
+        print("DEBUG values:", values)  # remove after confirming
 
         avg_latency = round(sum(values) / len(values), 2) if values else 0
 
