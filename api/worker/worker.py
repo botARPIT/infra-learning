@@ -26,7 +26,7 @@ def claim_job(job_id: str, worker_id: str):
 
         job.status = "processing"
         job.owned_by = worker_id
-        job.claimed_at = datetime.utcnow()
+        job.claimed_at = datetime.now(timezone.utc)
         job.lease_version += 1
 
         db.commit()
