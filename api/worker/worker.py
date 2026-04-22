@@ -111,11 +111,14 @@ def fail_job(job_id: str, lease_version: int, worker_id: str, error: str):
             job.status = "queued"
             job.lease_version += 1
             job.owned_by = None
+            job.claimed_at = None
+            job.execution_started_at = None
             
 
         else:
             job.status = "failed"
             job.owned_by = None
+            job.claimed_at = None
             
 
         db.commit()

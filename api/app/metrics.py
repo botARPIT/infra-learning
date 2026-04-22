@@ -71,17 +71,6 @@ def get_metrics():
             .all()
         )
 
-        completed = db.query(func.count()).filter(
-            Job.status == "done"
-            ).scalar()
-        
-        failed = db.query(func.count()).filter(
-            Job.status == "failed"
-            ).scalar()
-        
-        retried = db.query(func.count()).filter(
-            Job.retry_count > 0
-            ).scalar()
         
         retry_distribution = {
             str(retry): count for retry, count in retry_counts
@@ -157,9 +146,6 @@ def get_metrics():
             "retry_distribution": retry_distribution,
             "avg_terminal_latency_seconds": avg_latency,
             "p95_terminal_latency_seconds": p95_latency,
-            "jobs_completed_total": completed,
-            "jobs_failed_total": failed,
-            "jobs_retried_total": retried,
             "queue_wait_avg_seconds": queue_wait_avg,
             "execution_avg_seconds": execution_avg,
         }
