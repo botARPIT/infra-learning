@@ -110,7 +110,7 @@ def get_metrics():
             
         queue_wait_latencies = (
             db.query(
-                func.extract('epoch', Job.execution_started_at - Job.created_at)
+                func.extract('epoch', Job.claimed_at - Job.created_at)
             )
             .filter(
                 Job.execution_started_at.isnot(None)
