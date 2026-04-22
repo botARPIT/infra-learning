@@ -22,21 +22,6 @@ terminal_latency_p95_gauge = Gauge(
     "P95 terminal latency"
 )
 
-jobs_completed_total = Gauge(
-    "jobs_completed_total",
-    "Total completed jobs"
-)
-
-jobs_failed_total = Gauge(
-    "jobs_failed_total",
-    "Total failed jobs"
-)
-
-jobs_retried_total = Gauge(
-    "jobs_retried_total",
-    "Total retried jobs"
-)
-
 queue_wait_avg_gauge = Gauge(
     "queue_wait_avg_seconds",
     "Average queue wait time"
@@ -45,6 +30,25 @@ queue_wait_avg_gauge = Gauge(
 execution_avg_gauge = Gauge(
     "execution_avg_seconds",
     "Average execution latency"
+)
+
+# Counters
+jobs_completed_total = Counter(
+    "jobs_completed_total",
+    "Total completed jobs"
+)
+jobs_claimed_total = Counter(
+    "jobs_claimed_total",
+    "Total claimed jobs"
+)
+jobs_failed_total = Counter(
+    "jobs_failed_total",
+    "Total failed jobs"
+)
+
+jobs_retried_total = Counter(
+    "jobs_retried_total",
+    "Total retried jobs"
 )
 def get_metrics():
     db = SessionLocal()

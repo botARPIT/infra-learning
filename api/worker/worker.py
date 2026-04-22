@@ -5,6 +5,7 @@ from datetime import datetime, timezone
 from api.app.db import SessionLocal
 from api.app.models import Job
 from api.app.queues import enqueue_job
+from api.app.metrics import jobs_claimed_total, jobs_completed_total, jobs_failed_total, jobs_retried_total
 
 MAX_RETRIES = 3
 
@@ -30,6 +31,7 @@ def claim_job(job_id: str, worker_id: str):
         job.lease_version += 1
 
         db.commit()
+        jobs_claimed_total.inc()
         return job.lease_version
 
     finally:
@@ -76,6 +78,7 @@ def complete_job(job_id: str, lease_version: int, worker_id: str):
         job.error = None
         job.owned_by = None
         db.commit()
+        jobs_completed_total.inc()
         return True
     
     finally:
@@ -108,17 +111,22 @@ def fail_job(job_id: str, lease_version: int, worker_id: str, error: str):
             job.status = "queued"
             job.lease_version += 1
             job.owned_by = None
+            
 
         else:
             job.status = "failed"
             job.owned_by = None
+            
 
         db.commit()
 
         if retry_needed:
+            jobs_retried_total.inc()
             enqueue_job(job.id)
             print(f"retry queued for {job.id}")
-
+            
+        else:
+            jobs_failed_total.inc()
         return True
 
     finally:
