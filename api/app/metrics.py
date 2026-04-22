@@ -98,7 +98,6 @@ def get_metrics():
             if val is not None:
                 values.append(float(val))  # force float — Decimal silently breaks sum()/sort()
 
-        print("DEBUG values:", values)  # remove after confirming
 
         avg_latency = round(sum(values) / len(values), 2) if values else 0
 
@@ -130,11 +129,12 @@ def get_metrics():
         
         execution_latencies = (
             db.query(
-                func.extract('epoch', Job.execution_started_at - Job.claimed_at)
+                func.extract('epoch', Job.updated_at - Job.execution_started_at)
             )
             .filter(
                 Job.status.in_(["done", "failed"]),
-                Job.execution_started_at.isnot(None)
+                Job.execution_started_at.isnot(None),
+                Job.updated_at.isnot(None)
             )
             .all()
         )     
