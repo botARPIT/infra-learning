@@ -1,0 +1,69 @@
+version: "3.9"
+
+services:
+  postgres:
+    image: postgres:15
+    environment:
+      POSTGRES_USER: admin
+      POSTGRES_PASSWORD: admin
+      POSTGRES_DB: jobs
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+
+  redis:
+    image: redis:7
+    ports:
+      - "6379:6379"
+
+  api:
+    build: .
+    command: uvicorn api.app.main:app --host 0.0.0.0 --port 8002
+    ports:
+      - "8002:8002"
+    depends_on:
+      - postgres
+      - redis
+    environment:
+      DATABASE_URL: postgresql://admin:admin@postgres:5432/jobs
+      REDIS_HOST: redis
+
+  worker:
+    build: .
+    command: python -m api.app.worker_runner
+    depends_on:
+      - api
+      - redis
+      - postgres
+    environment:
+      DATABASE_URL: postgresql://admin:admin@postgres:5432/jobs
+      REDIS_HOST: redis
+
+  reaper:
+    build: .
+    command: python -m api.app.reaper
+    depends_on:
+      - api
+      - redis
+      - postgres
+    environment:
+      DATABASE_URL: postgresql://admin:admin@postgres:5432/jobs
+      REDIS_HOST: redis
+
+  prometheus:
+    image: prom/prometheus
+    volumes:
+      - ./prometheus.yml:/etc/prometheus/prometheus.yml
+    ports:
+      - "9090:9090"
+
+  grafana:
+    image: grafana/grafana
+    ports:
+      - "3000:3000"
+    depends_on:
+      - prometheus
+
+volumes:
+  postgres_data:
