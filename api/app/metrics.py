@@ -1,6 +1,6 @@
 from sqlalchemy import func
 from datetime import timedelta, datetime, timezone
-from prometheus_client import Gauge, generate_latest
+from prometheus_client import Gauge, generate_latest, Counter
 
 from api.app.db import SessionLocal
 from api.app.models import Job
@@ -46,11 +46,19 @@ jobs_retried_total = Gauge(
     "jobs_retried_total",
     "Total retried jobs"
 )
+
+# Counters
+jobs_recovered_total = Counter(
+    "jobs_recovered_total",
+    "Total recovered jobs"
+)
+
+METRICS_WINDOW_MINUTES = 5
 def get_metrics():
     db = SessionLocal()
 
     try:
-        window = datetime.now(timezone.utc) - timedelta(hours=1)
+        window = datetime.now(timezone.utc) - timedelta(minutes=METRICS_WINDOW_MINUTES)
         queue_depth = get_queue_depth()
 
         state_counts = (
@@ -87,7 +95,10 @@ def get_metrics():
             db.query(
                 func.extract('epoch', Job.updated_at - Job.created_at)
             )
-            .filter(Job.status.in_(["done", "failed"]))
+            .filter(
+                Job.status.in_(["done", "failed"]),
+                Job.updated_at >= window
+            )
             .all()
         )
 
@@ -113,7 +124,8 @@ def get_metrics():
                 func.extract('epoch', Job.claimed_at - Job.created_at)
             )
             .filter(
-                Job.claimed_at.isnot(None)
+                Job.claimed_at.isnot(None),
+                Job.updated_at >= window
             )
             .all()
         )
@@ -134,7 +146,8 @@ def get_metrics():
             .filter(
                 Job.status.in_(["done", "failed"]),
                 Job.execution_started_at.isnot(None),
-                Job.updated_at.isnot(None)
+                Job.updated_at.isnot(None),
+                Job.updated_at >= window
             )
             .all()
         )     
@@ -153,9 +166,9 @@ def get_metrics():
             "retry_distribution": retry_distribution,
             "avg_terminal_latency_seconds": avg_latency,
             "p95_terminal_latency_seconds": p95_latency,
-            "jobs_completed_total": completed,
-            "jobs_failed_total": failed,
-            "jobs_retried_total": retried,
+            "jobs_completed_current": completed,
+            "jobs_failed_current": failed,
+            "jobs_retried_current": retried,
             "queue_wait_avg_seconds": queue_wait_avg,
             "execution_avg_seconds": execution_avg,
         }

@@ -4,7 +4,7 @@ from datetime import datetime, timedelta, timezone
 from api.app.db import SessionLocal
 from api.app.models import Job
 from api.app.queues import enqueue_job
-
+from api.app.metrics import jobs_recovered_total
 
 STALE_AFTER_SECONDS = 15
 REAPER_INTERVAL_SECONDS = 5
@@ -43,6 +43,7 @@ def reap_stale_jobs():
 
         for job_id in recovered_ids:
             enqueue_job(job_id)
+            jobs_recovered_total.inc()
             print(f"[reaper] re-enqueued stale job {job_id}")
 
     finally:
