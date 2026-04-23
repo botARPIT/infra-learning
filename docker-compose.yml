@@ -31,7 +31,7 @@ services:
 
   worker:
     build: .
-    command: python -m api.app.worker_runner
+    command: python -m api.worker.run
     depends_on:
       - api
       - redis
@@ -42,7 +42,7 @@ services:
 
   reaper:
     build: .
-    command: python -m api.app.reaper
+    command: python -m api.reaper.reaper
     depends_on:
       - api
       - redis
