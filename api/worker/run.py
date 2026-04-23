@@ -2,7 +2,7 @@ import time
 from uuid import uuid4
 
 from api.app.queues import dequeue_job
-from .worker import claim_job, fail_job, complete_job, mark_execution_started
+from .worker import claim_job, fail_job, complete_job, mark_execution_started, heartbeat
 
 
 worker_id = f"worker-{uuid4().hex[:6]}"
@@ -29,7 +29,17 @@ while True:
             print(f"[{worker_id}] started executing {job_id}")
         else:
             print(f"[{worker_id}] was unable to execute {job_id}")
-        time.sleep(5)
+            continue
+        
+        lease_alive = True
+        for _ in range(5):
+            time.sleep(1)
+            if not heartbeat(job_id, lease_version, worker_id):
+                lease_alive = False
+                print(f"[{worker_id}] lease lost during execution")
+                break
+        if not lease_alive:
+            continue
         
         success = complete_job(job_id, lease_version, worker_id)
 

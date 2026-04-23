@@ -20,7 +20,8 @@ def reap_stale_jobs():
             db.query(Job)
             .filter(
                 Job.status == "processing",
-                Job.claimed_at < threshold
+                Job.last_heartbeat_at.isnot(None), 
+                Job.last_heartbeat_at < threshold
             )
             .with_for_update()
             .all()
@@ -34,7 +35,8 @@ def reap_stale_jobs():
             job.owned_by = None
             job.claimed_at = None
             job.updated_at = datetime.now(timezone.utc)
-
+            job.execution_started_at = None
+            job.last_heartbeat_at = None
             recovered_ids.append(job.id)
 
         db.commit()
@@ -48,5 +50,6 @@ def reap_stale_jobs():
 
 
 while True:
+    print("Reaper started...")
     reap_stale_jobs()
     time.sleep(REAPER_INTERVAL_SECONDS)

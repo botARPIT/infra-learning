@@ -27,6 +27,7 @@ def claim_job(job_id: str, worker_id: str):
         job.status = "processing"
         job.owned_by = worker_id
         job.claimed_at = datetime.now(timezone.utc)
+        job.last_heartbeat_at = datetime.now(timezone.utc)
         job.lease_version += 1
 
         db.commit()
@@ -34,7 +35,28 @@ def claim_job(job_id: str, worker_id: str):
 
     finally:
         db.close()
-        
+
+def heartbeat(job_id: str, lease_version: int, worker_id: str):
+    db = SessionLocal()
+
+    try:
+        job = db.query(Job).filter(
+            Job.id == job_id,
+            Job.lease_version == lease_version,
+            Job.owned_by == worker_id,
+            Job.status == "processing"
+        ).first()
+
+        if not job:
+            return False
+
+        job.last_heartbeat_at = datetime.now(timezone.utc)
+        db.commit()
+        return True
+
+    finally:
+        db.close()
+              
 def mark_execution_started(job_id: str, lease_version: int, worker_id: str):
     db = SessionLocal()
 
@@ -72,6 +94,7 @@ def complete_job(job_id: str, lease_version: int, worker_id: str):
             return False
         job.status = "done"
         job.result = "finished"
+        job.last_heartbeat_at = None
         job.updated_at = datetime.now(timezone.utc)
         job.error = None
         job.owned_by = None
@@ -110,13 +133,14 @@ def fail_job(job_id: str, lease_version: int, worker_id: str, error: str):
             job.owned_by = None
             job.claimed_at = None
             job.execution_started_at = None
-            
+            job.last_heartbeat_at = None
 
         else:
             job.status = "failed"
             job.owned_by = None
             job.claimed_at = None
-            
+            job.execution_started_at = None
+            job.last_heartbeat_at = None
 
         db.commit()
 

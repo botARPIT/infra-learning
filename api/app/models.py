@@ -24,3 +24,4 @@ class Job(Base):
     updated_at    = Column(DateTime(timezone=True), default=lambda: datetime.now(timezone.utc), onupdate=lambda: datetime.now(timezone.utc), nullable=False)
     claimed_at    = Column(DateTime(timezone=True), nullable=True)
     execution_started_at = Column(DateTime(timezone=True), nullable=True)
+    last_heartbeat_at = Column(DateTime(timezone=True), nullable=True)
