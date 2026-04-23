@@ -1,9 +1,9 @@
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker, declarative_base
+from .config import settings
 
-DATABASE_URL="postgresql://admin:admin@localhost:5434/jobs"
 
-engine = create_engine(DATABASE_URL)
+engine = create_engine(settings.DATABASE_URL)
 
 # Each request to db create a new session that is used by ORM to interact with db
 SessionLocal = sessionmaker(bind=engine)

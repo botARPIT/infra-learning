@@ -1,6 +1,6 @@
 from sqlalchemy import func
 from datetime import timedelta, datetime, timezone
-from prometheus_client import Gauge, generate_latest, Counter
+from prometheus_client import Gauge, generate_latest
 
 from api.app.db import SessionLocal
 from api.app.models import Job

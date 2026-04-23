@@ -8,11 +8,19 @@ from .schemas import JobRequest
 from .queues import enqueue_job
 from .metrics import get_metrics, get_prometheus_metrics
 from fastapi.responses import Response
+from .config import settings
+from contextlib import asynccontextmanager
 
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    # startup
+    Base.metadata.create_all(bind=engine)
+    yield
+    # shutdown
+    engine.dispose()
 
-Base.metadata.create_all(bind=engine)
+app = FastAPI(lifespan=lifespan)
 
-app = FastAPI()
 
 @app.post("/jobs", status_code=202)
 def create_job(payload: JobRequest, db: Session = Depends(get_db)):
@@ -51,17 +59,17 @@ def health():
     return {"status": "ok"}
 
 @app.get("/debug-metrics")
-def metrics():
+def debug_metrics():
     return get_metrics()
 
 @app.get("/metrics")
-def metrics():
+def prometheus_metrics():
     return Response(
         get_prometheus_metrics(),
         media_type="text/plain"
     )
 
-@app.get("jobs/{job_id}")
+@app.get("/jobs/{job_id}")
 def status(job_id: str):
     db = SessionLocal()
     

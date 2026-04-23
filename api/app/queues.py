@@ -1,6 +1,6 @@
 import redis
-
-r = redis.Redis(host="localhost", port=6381, decode_responses=True)
+from .config import settings
+r = redis.Redis(host="localhost", port=settings.REDIS_PORT, decode_responses=True)
 
 
 def enqueue_job(job_id: str):
