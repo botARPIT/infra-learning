@@ -1,8 +1,9 @@
 version: "3.9"
 
 x-app-env: &app-env
-  DATABASE_URL: postgresql://admin@postgres:5432/jobs
+  DATABASE_URL: postgresql://admin:admin@postgres:5432/jobs
   REDIS_HOST: redis
+
 services:
   postgres:
     image: postgres:15
@@ -37,6 +38,9 @@ services:
     ports:
       - "9090:9090"
     restart: unless-stopped
+    depends_on:
+      api:
+        condition: service_healthy
 
   grafana:
     image: grafana/grafana
@@ -45,24 +49,31 @@ services:
     depends_on:
       - prometheus
     restart: unless-stopped
+
   api:
     depends_on:
-      - postgres
-      - redis
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
     environment:
       <<: *app-env
 
   worker:
     depends_on:
-      - redis
-      - postgres
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
     environment:
       <<: *app-env
 
   reaper:
     depends_on:
-      - redis
-      - postgres
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
     environment:
       <<: *app-env
 
