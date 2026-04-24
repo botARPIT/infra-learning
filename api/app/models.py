@@ -1,4 +1,4 @@
-from sqlalchemy import Column, String, Integer, DateTime, Text, Enum as SAEnum
+from sqlalchemy import Column, String, Integer, DateTime, Text, func, Enum as SAEnum
 from datetime import datetime, timezone
 from enum import Enum
 from .db import Base
@@ -20,8 +20,8 @@ class Job(Base):
 
     owned_by      = Column(String, nullable=True)
 
-    created_at    = Column(DateTime(timezone=True), default=lambda: datetime.now(timezone.utc), nullable=False)
-    updated_at    = Column(DateTime(timezone=True), default=lambda: datetime.now(timezone.utc), onupdate=lambda: datetime.now(timezone.utc), nullable=False)
+    created_at    = Column(DateTime(timezone=True), server_default=func.now(), nullable=False)
+    updated_at    = Column(DateTime(timezone=True), server_default=func.now(), onupdate=lambda: datetime.now(timezone.utc), nullable=False)
     claimed_at    = Column(DateTime(timezone=True), nullable=True)
     execution_started_at = Column(DateTime(timezone=True), nullable=True)
     last_heartbeat_at = Column(DateTime(timezone=True), nullable=True)
