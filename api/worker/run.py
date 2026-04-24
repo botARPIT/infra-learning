@@ -1,17 +1,28 @@
 import time
 from uuid import uuid4
-
+import signal
+import sys
 from api.app.queues import dequeue_job
 from .worker import claim_job, fail_job, complete_job, mark_execution_started, heartbeat
 
+DEQUE_TIMEOUT_SECONDS = 2
 
+shutdown_requested = False
 worker_id = f"worker-{uuid4().hex[:6]}"
 
+def handle_shutdown(signum, frame):
+    global shutdown_requested
+    shutdown_requested = True
+    print(f"[{worker_id}] shutdown requested ")
 
-while True:
+signal.signal(signal.SIGTERM, handle_shutdown)
+signal.signal(signal.SIGINT, handle_shutdown)
+while not shutdown_requested:
     print(f"[{worker_id}] waiting for jobs..")
 
-    job_id = dequeue_job()
+    job_id = dequeue_job(timeout=DEQUE_TIMEOUT_SECONDS)
+    if not job_id:
+        continue
 
     lease_version = claim_job(job_id, worker_id)
     
@@ -33,13 +44,19 @@ while True:
         
         lease_alive = True
         for _ in range(5):
-            time.sleep(1)
+            
             if not heartbeat(job_id, lease_version, worker_id):
                 lease_alive = False
                 print(f"[{worker_id}] lease lost during execution")
                 break
+            
+            if shutdown_requested:
+                print(f"[{worker_id}] shutdown requested, finishing current job")
+                break
+            time.sleep(1)
         if not lease_alive:
             continue
+        
         
         success = complete_job(job_id, lease_version, worker_id)
 
@@ -52,3 +69,6 @@ while True:
     except Exception as e:
         fail_job(job_id, lease_version, worker_id, str(e))
         print(f"[{worker_id}] failed {job_id}")
+        
+print(f"[{worker_id}] exiting cleanly")
+sys.exit(0)

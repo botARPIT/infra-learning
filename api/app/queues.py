@@ -7,9 +7,14 @@ def enqueue_job(job_id: str):
     r.rpush("jobs", job_id)
 
 
-def dequeue_job():
-    item = r.blpop("jobs")
-    return item[1]
+def dequeue_job(timeout = 2):
+    item = r.blpop("jobs", timeout=timeout)
+    if not item:
+        return None
+    
+    _, job_id = item
+    
+    return job_id.decode()
 
 def get_queue_depth():
     return r.llen("jobs")
