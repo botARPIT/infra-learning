@@ -20,12 +20,12 @@ sudo systemctl start docker
 sudo systemctl enable docker
 
 echo "Starting Redis..."
-sudo docker run -d --name async-job-redis -p 6381:6379 redis:7-alpine || true
+sudo docker run -d --name async-job-redis -p 6379:6379 redis:7-alpine || true
 
 echo "Starting Postgres..."
 sudo docker run -d 
 --name async-job-postgres 
--p 5434:5432 
+-p 5432:5432 
 -e POSTGRES_USER=admin 
 -e POSTGRES_PASSWORD=admin 
 -e POSTGRES_DB=jobs 
@@ -44,7 +44,7 @@ echo "Starting worker 2..."
 python3 -m api.worker.run &
 
 echo "Starting reaper..."
-python3 -m api.worker.reaper &
+python3 -m api.reaper.reaper &
 
 sleep 3
 
