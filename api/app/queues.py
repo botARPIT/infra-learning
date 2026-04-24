@@ -3,6 +3,10 @@ from .config import settings
 r = redis.Redis(host="redis", port=settings.REDIS_PORT, decode_responses=True)
 
 
+
+def ping_redis():
+    return r.ping
+
 def enqueue_job(job_id: str):
     r.rpush("jobs", job_id)
 

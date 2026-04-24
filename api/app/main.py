@@ -2,10 +2,10 @@ from fastapi import FastAPI, Depends
 from sqlalchemy.orm import Session
 from uuid import uuid4
 
-from .db import SessionLocal, engine, get_db
+from .db import SessionLocal, engine, get_db, ping_db
 from .models import Base, Job
 from .schemas import JobRequest
-from .queues import enqueue_job
+from .queues import enqueue_job, ping_redis
 from .metrics import get_metrics, get_prometheus_metrics
 from fastapi.responses import Response
 from .config import settings
@@ -58,6 +58,22 @@ def create_job(payload: JobRequest, db: Session = Depends(get_db)):
 def health():
     return {"status": "ok"}
 
+@app.get("/ready")
+def ready():
+    
+    try:
+        ping_db()
+        ping_redis()
+        
+        return {"status": "ready"}
+    
+    except Exception as e:
+        return {
+            "status": "not ready",
+            "reason": str(e)
+        }
+              
+        
 @app.get("/debug-metrics")
 def debug_metrics():
     return get_metrics()
