@@ -11,8 +11,8 @@ services:
       - "8002:8002"
   worker:
     <<: *app-build
-    command: python -m api.app.worker_runner
+    command: python -m api.worker.run
 
   reaper:
     <<: *app-build
-    command: python -m api.app.reaper
+    command: python -m api.reaper.reaper
