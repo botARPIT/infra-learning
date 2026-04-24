@@ -9,19 +9,23 @@ from .queues import enqueue_job, ping_redis
 from .metrics import get_metrics, get_prometheus_metrics
 from fastapi.responses import Response
 from .config import settings
+from .recovery import recover_queued_jobs
 from contextlib import asynccontextmanager
+
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     # startup
-    Base.metadata.create_all(bind=engine)
+    recover_queued_jobs()
+    print("[startup] queue recovery complete")
     yield
     # shutdown
-    engine.dispose()
-
+    print("[shutdown] app stopping")
+    
 app = FastAPI(lifespan=lifespan)
 
 
+    
 @app.post("/jobs", status_code=202)
 def create_job(payload: JobRequest, db: Session = Depends(get_db)):
     job_id = str(uuid4())
