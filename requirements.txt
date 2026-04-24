@@ -8,3 +8,4 @@ starlette==0.36.3
 prometheus_client
 dotenv
 pydantic_settings
+alembic
