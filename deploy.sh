@@ -7,6 +7,11 @@ echo "Pulling latest code..."
 git fetch origin main
 git reset --hard origin/main
 
+cat > .env.runtime <<EOF
+DATABASE_URL=$DATABASE_URL
+REDIS_HOST=$REDIS_HOST
+EOF
+
 echo "Building fresh image..."
 docker-compose -f docker-compose.base.yml -f docker-compose.vpc.yml build
 
