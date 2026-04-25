@@ -5,7 +5,7 @@ psycopg2-binary==2.9.9
 redis==5.0.3
 pydantic==2.6.4
 starlette==0.36.3
-prometheus_client
-dotenv
-pydantic_settings
-alembic
+prometheus_client==0.25.0
+python-dotenv==1.0.1
+pydantic-settings==2.2.1
+alembic==1.18.4

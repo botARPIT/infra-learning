@@ -1,7 +1,5 @@
-version: "3.9"
-
 x-app-env: &app-env
-  DATABASE_URL: postgresql://postgres:admin@postgres.infra.local:5432/jobs
+  DATABASE_URL: postgresql://admin:admin@postgres.infra.local:5432/jobs
   REDIS_HOST: redis
 
 services:

@@ -1,5 +1,3 @@
-version: "3.9"
-
 x-app-env: &app-env
   DATABASE_URL: postgresql://admin:admin@postgres:5432/jobs
   REDIS_HOST: redis
@@ -16,7 +14,7 @@ services:
     volumes:
       - postgres_data:/var/lib/postgresql/data
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U admin"]
+      test: ["CMD-SHELL", "pg_isready -U admin -d jobs"]
       interval: 5s
       timeout: 30s
       retries: 5
