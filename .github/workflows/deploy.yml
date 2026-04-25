@@ -1,52 +1,28 @@
-name: CI-CD
+name: Deploy
 
 on:
   push:
-    branches: [main]
+    branches:
+      - main
 
 jobs:
-  test:
+  deploy:
     runs-on: ubuntu-latest
 
-    services:
-      postgres:
-        image: postgres:15
-        env:
-          POSTGRES_USER: admin
-          POSTGRES_PASSWORD: admin
-          POSTGRES_DB: jobs
-        ports:
-          - 5432:5432
-        options: >-
-          --health-cmd="pg_isready -U admin"
-          --health-interval=5s
-          --health-timeout=5s
-          --health-retries=5
-
-      redis:
-        image: redis:7
-        ports:
-          - 6379:6379
-
-    env:
-      DATABASE_URL: postgresql://admin:admin@localhost:5432/jobs
-      REDIS_HOST: localhost
-
     steps:
-      - uses: actions/checkout@v4
+      - name: Checkout repo
+        uses: actions/checkout@v4
 
-      - uses: actions/setup-python@v5
-        with:
-          python-version: "3.11"
+      - name: Setup SSH
+        run: |
+          mkdir -p ~/.ssh
+          echo "${{ secrets.EC2_SSH_KEY }}" > ~/.ssh/id_rsa
+          chmod 600 ~/.ssh/id_rsa
+          ssh-keyscan -H ${{ secrets.EC2_HOST }} >> ~/.ssh/known_hosts
 
-      - name: Install deps
-        run: pip install -r requirements.txt
-
-      - name: Run migrations
-        run: alembic upgrade head
-
-      - name: Build docker image
-        run: docker build -t infra-learning .
-
-      - name: Validate compose
-        run: docker compose -f docker-compose.base.yml -f docker-compose.local.yml config
+      - name: Deploy to EC2
+        run: |
+          ssh ${{ secrets.EC2_USER }}@${{ secrets.EC2_HOST }} '
+            cd ~/infra-learning &&
+            ./deploy.sh
+          '
