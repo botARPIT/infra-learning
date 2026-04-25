@@ -23,7 +23,10 @@ docker-compose -f docker-compose.base.yml -f docker-compose.vpc.yml build
 echo "Running migrations..."
 docker-compose -f docker-compose.base.yml -f docker-compose.vpc.yml run --rm api alembic upgrade head
 
-echo "Restarting services..."
+echo "Stopping old services..."
+docker-compose -f docker-compose.base.yml -f docker-compose.vpc.yml down
+
+echo "Starting new services..."
 docker-compose -f docker-compose.base.yml -f docker-compose.vpc.yml up -d --remove-orphans
 
 for i in {1..10}; do
