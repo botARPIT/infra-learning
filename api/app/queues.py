@@ -18,7 +18,7 @@ def dequeue_job(timeout = 2):
     
     _, job_id = item
     
-    return job_id.decode()
+    return job_id
 
 def get_queue_depth():
     return r.llen("jobs")
