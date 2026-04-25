@@ -1,6 +1,8 @@
 #!/bin/bash
 set -e
 
+cd ~/infra-learning
+
 echo "Pulling latest code..."
 git pull origin main
 
@@ -13,8 +15,7 @@ docker compose -f docker-compose.base.yml -f docker-compose.vpc.yml run --rm api
 echo "Restarting services..."
 docker compose -f docker-compose.base.yml -f docker-compose.vpc.yml up -d --remove-orphans
 
-echo "Checking status..."
-docker compose ps
+echo "Checking health..."
 curl -f http://localhost:8002/health
 
 echo "Deploy complete"
