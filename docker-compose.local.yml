@@ -1,7 +1,3 @@
-x-app-env: &app-env
-  DATABASE_URL: postgresql://admin:admin@postgres:5432/jobs
-  REDIS_HOST: redis
-
 services:
   postgres:
     image: postgres:15
@@ -54,8 +50,8 @@ services:
         condition: service_healthy
       redis:
         condition: service_healthy
-    environment:
-      <<: *app-env
+    env_file:
+      - .env.local
 
   worker:
     depends_on:
@@ -63,8 +59,8 @@ services:
         condition: service_healthy
       redis:
         condition: service_healthy
-    environment:
-      <<: *app-env
+    env_file:
+      - .env.local
 
   reaper:
     depends_on:
@@ -72,8 +68,8 @@ services:
         condition: service_healthy
       redis:
         condition: service_healthy
-    environment:
-      <<: *app-env
+    env_file:
+      - .env.local
 
 volumes:
   postgres_data:
