@@ -4,7 +4,8 @@ set -e
 cd ~/infra-learning
 
 echo "Pulling latest code..."
-git pull origin main
+git fetch origin main
+git reset --hard origin/main
 
 echo "Building fresh image..."
 docker compose -f docker-compose.base.yml -f docker-compose.vpc.yml build
