@@ -13,6 +13,8 @@ jobs:
 
     steps:
       - name: Deploy locally
+        env:
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+          REDIS_HOST: ${{ secrets.REDIS_HOST }}
         run: |
-          cd ~/infra-learning
-          ./deploy.sh
+          bash /home/ubuntu/infra-learning/deploy.sh
