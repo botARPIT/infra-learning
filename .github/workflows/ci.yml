@@ -48,5 +48,12 @@ jobs:
       - name: Build docker image
         run: docker build -t infra-learning .
 
+      - name: Create placeholder env file
+        run: |
+          cat > .env.runtime <<EOF
+          DATABASE_URL=dummy
+          REDIS_HOST=dummy
+          EOF
+
       - name: Validate compose
         run: docker compose -f docker-compose.base.yml -f docker-compose.vpc.yml config
