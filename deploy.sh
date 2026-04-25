@@ -7,6 +7,11 @@ echo "Pulling latest code..."
 git fetch origin main
 git reset --hard origin/main
 
+if [ -z "$DATABASE_URL" ] || [ -z "$REDIS_HOST" ]; then
+  echo "Missing required secrets"
+  exit 1
+fi
+
 cat > .env.runtime <<EOF
 DATABASE_URL=$DATABASE_URL
 REDIS_HOST=$REDIS_HOST
@@ -21,7 +26,15 @@ docker-compose -f docker-compose.base.yml -f docker-compose.vpc.yml run --rm api
 echo "Restarting services..."
 docker-compose -f docker-compose.base.yml -f docker-compose.vpc.yml up -d --remove-orphans
 
-echo "Checking health..."
-curl -f http://localhost:8002/health
+for i in {1..10}; do
+  if curl -f http://localhost:8002/ready; then
+    echo "Deploy complete"
+    exit 0
+  fi
 
-echo "Deploy complete"
+  echo "Waiting for readiness..."
+  sleep 3
+done
+
+echo "Deploy failed: readiness check failed"
+exit 1
