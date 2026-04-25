@@ -214,7 +214,6 @@ This separates process truth from traffic readiness.
 
 Not yet implemented:
 
-- Alembic migrations
 - Structured logs
 - CI/CD deployment pipeline
 - Autoscaling
@@ -238,10 +237,10 @@ docker-compose -f docker-compose.base.yml -f docker-compose.vpc.yml up --build
 
 ### Dashboards
 
-| Service | URL                   |
-| ------- | --------------------- |
-| Grafana | http://localhost:3000 |
-
-(docs/images/infra-learning-grafana-dashboard.png)
+| Service    | URL                   |
+| ---------- | --------------------- |
+| Grafana    | http://localhost:3000 |
 | Prometheus | http://localhost:9090 |
-| API | http://localhost:8002 |
+| API        | http://localhost:8002 |
+
+![Grafana Dashboard](docs/images/infra-learning-grafana-dashboard.png)
