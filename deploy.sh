@@ -20,16 +20,16 @@ EOF
 docker system prune -af || true
 
 echo "Building fresh image..."
-docker-compose -f docker-compose.base.yml -f docker-compose.vpc.yml build
+docker compose -f docker-compose.base.yml -f docker-compose.vpc.yml build
 
 echo "Running migrations..."
-docker-compose -f docker-compose.base.yml -f docker-compose.vpc.yml run --rm api alembic upgrade head
+docker compose -f docker-compose.base.yml -f docker-compose.vpc.yml run --rm api alembic upgrade head
 
 echo "Stopping old services..."
-docker-compose -f docker-compose.base.yml -f docker-compose.vpc.yml down --remove-orphans
+docker compose -f docker-compose.base.yml -f docker-compose.vpc.yml down --remove-orphans
 
 echo "Starting new services..."
-docker-compose -f docker-compose.base.yml -f docker-compose.vpc.yml up -d --remove-orphans
+docker compose -f docker-compose.base.yml -f docker-compose.vpc.yml up -d --remove-orphans
 
 for i in {1..10}; do
   if curl -f http://localhost:8002/ready; then
