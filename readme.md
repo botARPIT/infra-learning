@@ -4,6 +4,12 @@ A lease-based asynchronous job execution system built with FastAPI, Redis, Postg
 
 The system is designed to execute background jobs under explicit ownership control, recover from worker failure safely, and expose operational behavior through latency decomposition and runtime metrics.
 
+Repo layout is explicit:
+
+- `backend/` contains the FastAPI service, workers, migrations, backend Dockerfile, and backend env files.
+- `frontend/` contains the Vite-based visualizer UI.
+- Repo root contains Docker Compose, CI/CD, and shared operational scripts.
+
 ---
 
 ## Problem
@@ -33,6 +39,23 @@ Worker ────────────────────┘
 Prometheus → Grafana
 ```
 
+### System Diagram
+
+![System Diagram](backend/api/docs/images/system-diagram.png)
+
+| Flow                              | Description                                                           |
+| --------------------------------- | --------------------------------------------------------------------- |
+| Client → FastAPI                  | Submit jobs (`POST /jobs`) and poll status (`GET /jobs/{id}`)         |
+| FastAPI → Redis                   | Enqueue fresh job id after DB commit                                  |
+| FastAPI → Postgres                | Persist authoritative job state on every create/update                |
+| Redis → Worker                    | Worker dequeues job id via blocking pop                               |
+| Worker → Postgres                 | Acquire lease, save heartbeat, complete or fail job                   |
+| Worker → Redis                    | Re-enqueue job id on declared failure (retry budget not exhausted)    |
+| Reaper → Postgres                 | Poll for stale `processing` jobs beyond heartbeat timeout             |
+| Reaper → Redis                    | Re-enqueue recovered job ids after clearing stale ownership           |
+| FastAPI → Prometheus              | Expose `/metrics` endpoint scraped by Prometheus every 5s             |
+| Prometheus → Grafana              | Grafana reads Prometheus as datasource for operational dashboards     |
+
 ### Components
 
 | Component  | Role                                               |
@@ -56,11 +79,14 @@ Redis is not trusted for job truth. All lifecycle decisions are derived from Pos
 ```
 queued → processing → done
 queued → processing → failed
-processing → queued        (retry)
-processing → queued        (reaper recovery)
+queued → processing → queued     (retry — worker re-enqueues)
+queued → processing → queued     (reaper recovery)
+API enqueue failure  → enqueue_failed
 ```
 
 **Terminal states:** `done`, `failed`
+
+`enqueue_failed` means the job row is durable in PostgreSQL but the Redis transport signal was never sent. The reaper reconciles these on its next poll cycle.
 
 Terminal states are outside queue authority. Workers and reaper never mutate terminal jobs.
 
@@ -101,17 +127,20 @@ processing → failed        (when retry_count == MAX_RETRIES)
 
 ### Reaper recovery
 
-The reaper detects stale workers using `claimed_at`. If the claim timestamp exceeds the threshold:
+The reaper detects stale workers using `last_heartbeat_at`. If the heartbeat timestamp exceeds the stale threshold (15 seconds), the reaper resets the job:
 
 ```
 processing → queued
 lease_version += 1
 ownership cleared
+claimed_at cleared
 ```
+
+If `retry_count` has reached `MAX_RETRIES` at the point of reaper recovery, the job is transitioned directly to `failed` instead of being re-queued.
 
 ### Queue reconciliation
 
-If PostgreSQL says `status = queued` but the Redis transport signal is missing, the reaper re-injects the queue signal. This restores delivery without mutating DB state.
+If PostgreSQL says `status = queued` but the Redis transport signal is missing (e.g. after an `enqueue_failed`), the reaper re-injects the queue signal on startup via `recover_queued_jobs()`. This restores delivery without mutating DB state.
 
 ---
 
@@ -229,10 +258,44 @@ Not yet implemented:
 docker-compose -f docker-compose.base.yml -f docker-compose.local.yml up --build
 ```
 
+Backend env file for this mode: `backend/.env.local`
+Frontend env file for this mode: `frontend/.env`
+
 ### VPC mode
 
 ```bash
 docker-compose -f docker-compose.base.yml -f docker-compose.vpc.yml up --build
+```
+
+Backend env file for this mode: `backend/.env.vpc`
+
+### Minimum deployment configuration
+
+Backend runtime file must define:
+
+```env
+DATABASE_URL=postgresql://admin:<strong-password>@postgres:5432/jobs
+REDIS_HOST=redis
+REDIS_PORT=6379
+CORS_ALLOW_ORIGINS=https://frontend.example.com
+```
+
+Frontend deployment must define:
+
+```env
+VITE_API_BASE_URL=https://api.example.com
+```
+
+If the frontend is served from a different origin than the API, `VITE_API_BASE_URL`
+must target the public API URL and `CORS_ALLOW_ORIGINS` must include the public
+frontend origin exactly.
+
+### Frontend
+
+```bash
+cd frontend
+npm install
+npm run dev
 ```
 
 ### Dashboards
@@ -243,4 +306,7 @@ docker-compose -f docker-compose.base.yml -f docker-compose.vpc.yml up --build
 | Prometheus | http://localhost:9090 |
 | API        | http://localhost:8002 |
 
-![Grafana Dashboard](docs/images/infra-learning-grafana-dashboard.png)
+![Grafana Dashboard](backend/api/docs/images/infra-learning-grafana-dashboard.png)
+
+Grafana is provisioned from `grafana/provisioning/datasources/prometheus.yml`,
+so Prometheus is available as a datasource immediately after startup.
