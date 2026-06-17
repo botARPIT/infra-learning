@@ -308,5 +308,20 @@ npm run dev
 
 ![Grafana Dashboard](backend/api/docs/images/infra-learning-grafana-dashboard.png)
 
-Grafana is provisioned from `grafana/provisioning/datasources/prometheus.yml`,
-so Prometheus is available as a datasource immediately after startup.
+Grafana is provisioned from `grafana/provisioning/datasources/prometheus.yml`, so Prometheus is available as a datasource immediately after startup.
+
+#### Prometheus Metrics under Load
+
+The following Prometheus query graphs show operational behavior during execution and failure injection testing:
+
+##### Average Terminal Latency (5m Window)
+![Average Terminal Latency](backend/api/docs/images/infra-learning-terminal-latency-avg-seconds-interval-5m.png)
+
+##### P95 Terminal Latency (1m Window)
+![P95 Terminal Latency](backend/api/docs/images/infra-learning-terminal-latency-p95-seconds-interval-1m.png)
+
+##### Queue Depth under Burst Load (1m Window)
+![Queue Depth](backend/api/docs/images/infra-learning-failure-injection-exp1-queue-depth-interval-5m.png)
+
+##### Queue Depth Recovery Cycle (5m Full Window)
+![Queue Depth Recovery Cycle](backend/api/docs/images/infra-learning-failure-injection-exp1-queue-depth-interval-5m-full.png)
